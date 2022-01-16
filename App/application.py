@@ -16,6 +16,7 @@ class Application:
     def __init__(self, config):
         self.init_pygame()
         self.game = None
+        self.config = config
         if config["has_save_state"]:
             self.load_state()
         else:
@@ -85,7 +86,7 @@ class Application:
                 self.game = pickle.load(f)
                 f.close()
         except FileNotFoundError:
-            print(TermColors.FAIL + f"Error: Could not find file \"{LOAD_PATH}\", loading new game..." +
+            print(TermColors.WARNING + f"Warning: Could not find file \"{LOAD_PATH}\", loading new game..." +
                   TermColors.ENDC)
             self.game = Game(RUN_CONFIG["first"])
         print(TermColors.OKGREEN + "_Game loaded successfully" + TermColors.ENDC)

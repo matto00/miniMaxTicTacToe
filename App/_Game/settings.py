@@ -24,12 +24,16 @@ FONT_SIZE = 20
 # _Game Constants
 HUMAN = +1
 COMP = -1
+# ALPHA/BETA apply to minimax evaluation function
+ALPHA = +1  # Computer wins
+BETA = -1  # Human wins
+GAMMA = 0  # Draw
 NIL = 0
 DRAW = 2
 P1_COLOR = BLUE
 P2_COLOR = RED
 RUN_CONFIG = {
-    "save_game_state": True
+    "save_game_state": True,
     "has_save_state": True,
     "first": HUMAN
 }
