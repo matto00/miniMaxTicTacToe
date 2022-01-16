@@ -70,6 +70,8 @@ class Application:
         print(TermColors.OKGREEN + "Deconstruction complete" + TermColors.ENDC)
 
     def save_state(self) -> None:
+        if not self.config["save_game_state"]:
+            return
         print("Saving game...")
         with open(SAVE_PATH, "wb") as f:
             pickle.dump(self.game, f)

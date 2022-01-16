@@ -29,10 +29,11 @@ DRAW = 2
 P1_COLOR = BLUE
 P2_COLOR = RED
 RUN_CONFIG = {
+    "save_game_state": True
     "has_save_state": True,
     "first": HUMAN
 }
-LOAD_PATH = SAVE_PATH = "../gamesave.bin"
+LOAD_PATH = SAVE_PATH = "./gamesave.bin"
 
 
 class TermColors:
