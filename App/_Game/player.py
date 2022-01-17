@@ -73,11 +73,15 @@ def convert_colors_to_ndxs(state: list) -> list:
 
 
 class Player:
-    def __init__(self, color: tuple):
+    def __init__(self, color: tuple, name: str = ""):
         self.color = color
+        self.name = name
 
     def get_color(self) -> tuple:
         return self.color
+
+    def get_name(self) -> str:
+        return self.name
 
     def __getstate__(self) -> dict:
         return self.__dict__

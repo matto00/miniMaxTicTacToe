@@ -14,6 +14,12 @@ def clear_console():
 
 class Application:
     def __init__(self, config):
+        self.in_menu = True
+        self.is_multiplayer = False
+        self.is_typing = False
+        self.name_text = ""
+        self.mp_bg_color = RED
+
         self.init_pygame()
         self.game = None
         self.config = config
@@ -23,8 +29,10 @@ class Application:
             self.game = Game(config["first"])
         self.display = pygame.display.set_mode((WIDTH, HEIGHT))
         self.font = pygame.font.SysFont(FONT, 20)
+        self.menu_objects = self.init_menu_objects()
         self.dynamic_objs = self.init_dynamic_objs()
         self.static_objs = self.init_static_objs()
+
         clear_console()
 
     @staticmethod
@@ -35,6 +43,23 @@ class Application:
         pygame.display.set_caption("TicTacToe.py")
         pygame.font.init()
         print(TermColors.OKGREEN + "Initialization complete" + TermColors.ENDC)
+
+    def init_menu_objects(self) -> dict:
+        print("Initializing menu objects...")
+        objects = {
+            "labels": [
+                self.font.render("Tic Tac Toe", False, TEXT_COLOR, BG_COLOR),
+                self.font.render("Player Name", False, TEXT_COLOR, TF_COLOR),
+                self.font.render("Multiplayer", False, TEXT_COLOR, self.mp_bg_color),
+                self.font.render("Play", False, TEXT_COLOR, CYAN)
+            ],
+            "buttons": [
+                pygame.Rect(MP_BUTTON_LEFT, MP_BUTTON_TOP, MP_BUTTON_WIDTH, MP_BUTTON_HEIGHT),
+                pygame.Rect(NAME_TF_LEFT, NAME_TF_TOP, NAME_TF_WIDTH, NAME_TF_HEIGHT),
+                pygame.Rect(PLAY_BTN_LEFT, PLAY_BTN_TOP, PLAY_BTN_WIDTH, PLAY_BTN_HEIGHT)
+            ]
+        }
+        return objects
 
     def init_dynamic_objs(self) -> dict:
         print("Initializing dynamic objects...")
@@ -60,6 +85,11 @@ class Application:
         }
         print(TermColors.OKGREEN + "Initialization complete" + TermColors.ENDC)
         return objects
+
+    def init_game(self):
+        if self.is_multiplayer:
+            # TODO: start client script
+            pass
 
     def deconstruct(self) -> None:
         print("Closing application...")
@@ -98,36 +128,80 @@ class Application:
                 if event.type == pygame.QUIT or event.type == pygame.K_q or event.type == pygame.K_ESCAPE:
                     self.deconstruct()
                     exit()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    self.handle_event(event.type)
+                if event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.KEYDOWN:
+                    self.handle_event(event)
             self.update_display()
 
     def update_display(self) -> None:
         self.display.fill(BLACK)
-        tile_colors = self.game.get_tile_colors()
-        # Draw tiles
-        for i in range(len(self.dynamic_objs["tiles"])):
-            pygame.draw.rect(self.display, tile_colors[i], self.dynamic_objs["tiles"][i])
-        # Draw win counts
-        self.display.blit(self.dynamic_objs["win_counts"][0], P1_LABEL_POS)
-        self.display.blit(self.dynamic_objs["win_counts"][1], P2_LABEL_POS)
-        # Draw labels
-        self.display.blit(self.static_objs["labels"][0], GAME_LABEL_POS)
+        if self.in_menu:
+            # Buttons
+            mp_btn_color = GREEN if self.is_multiplayer else RED
+            pygame.draw.rect(self.display, mp_btn_color, self.menu_objects["buttons"][0])
+            pygame.draw.rect(self.display, TF_COLOR, self.menu_objects["buttons"][1])
+            pygame.draw.rect(self.display, CYAN, self.menu_objects["buttons"][2])
+            # Labels
+            self.display.blit(self.menu_objects["labels"][0], GAME_LABEL_POS)
+            self.menu_objects["labels"][1] = self.font.render(self.name_text, False, TEXT_COLOR, TF_COLOR)
+            self.display.blit(self.menu_objects["labels"][1], (NAME_TF_LEFT + NAME_TF_WIDTH * 0.1, NAME_TF_TOP + NAME_TF_HEIGHT * 0.1))
+            self.display.blit(self.menu_objects["labels"][2], (MP_BUTTON_LEFT + MP_BUTTON_WIDTH * 0.1,
+                                                               MP_BUTTON_TOP + MP_BUTTON_HEIGHT * 0.1))
+            self.display.blit(self.menu_objects["labels"][3], (PLAY_BTN_LEFT + PLAY_BTN_WIDTH * 0.1, PLAY_BTN_TOP +
+                                                               PLAY_BTN_HEIGHT * 0.1))
+        else:
+            tile_colors = self.game.get_tile_colors()
+            # Draw tiles
+            for i in range(len(self.dynamic_objs["tiles"])):
+                pygame.draw.rect(self.display, tile_colors[i], self.dynamic_objs["tiles"][i])
+            # Draw win counts
+            self.display.blit(self.dynamic_objs["win_counts"][0], P1_LABEL_POS)
+            self.display.blit(self.dynamic_objs["win_counts"][1], P2_LABEL_POS)
+            # Draw labels
+            self.display.blit(self.static_objs["labels"][0], GAME_LABEL_POS)
         pygame.display.update()
 
     def handle_event(self, event: pygame.event) -> None:
-        print(f"Handling event: {event}...")
-        if event == pygame.MOUSEBUTTONDOWN:
+        print(f"Handling event: {event.type}...")
+        if event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
-            for obj in self.dynamic_objs["tiles"]:
-                if obj.collidepoint(pos[0], pos[1]):
-                    self.handle_move(self.dynamic_objs["tiles"].index(obj))
+            if self.in_menu:
+                if not self.is_typing:
+                    if self.menu_objects['buttons'][0].collidepoint(pos[0], pos[1]):
+                        self.is_multiplayer = not self.is_multiplayer
+                        self.mp_bg_color = GREEN if self.mp_bg_color is RED else RED
+                        self.menu_objects["labels"][2] = self.font.render("Multiplayer", False, TEXT_COLOR,
+                                                                          self.mp_bg_color)
+                    if self.menu_objects['buttons'][1].collidepoint(pos[0], pos[1]):
+                        self.is_typing = not self.is_typing
+                    if self.menu_objects['buttons'][2].collidepoint(pos[0], pos[1]):
+                        self.handle_play_click()
+            else:
+                for obj in self.dynamic_objs["tiles"]:
+                    if obj.collidepoint(pos[0], pos[1]):
+                        self.handle_move(self.dynamic_objs["tiles"].index(obj))
+        if event.type == pygame.KEYDOWN:
+            if self.in_menu:
+                if event.key == pygame.K_RETURN:
+                    self.is_typing = not self.is_typing
+                elif event.key == pygame.K_BACKSPACE:
+                    self.name_text = self.name_text[:-1]
+                    self.menu_objects["labels"][1] = self.font.render(self.name_text, False, TEXT_COLOR, TF_COLOR)
+                else:
+                    self.name_text += event.unicode
+                    self.menu_objects["labels"][1] = self.font.render(self.name_text, False, TEXT_COLOR, TF_COLOR)
         print("Handling complete")
+
+    def handle_play_click(self):
+        self.in_menu = not self.in_menu
+        self.init_game()
+        # TODO: Add multiplayer check
+        # self.play_game()
 
     def handle_move(self, tile_ndx: int) -> None:
         print(f"Handling move at ndx: {tile_ndx}")
         win_state = self.game.update(HUMAN, tile_ndx)
         self.update_display()
+        # TODO: Refactor to handle multiplayer
         if win_state is NIL:
             win_state = self.game.update(COMP)
             self.update_display()

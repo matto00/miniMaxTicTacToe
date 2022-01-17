@@ -5,11 +5,15 @@ from .player import Player, wins_by_color
 from .board import Board
 
 
+# TODO: Refactor so game can run multiplayer
+
+
 class Game:
-    def __init__(self, first: int):
+    def __init__(self, first: int, is_multiplayer: bool = False, p1_name: str = "You", p2_name: str = "Opponent"):
+        self.is_multiplayer = is_multiplayer
         self.players = {
-            HUMAN: Player(P1_COLOR),
-            COMP: Player(P2_COLOR)
+            HUMAN: Player(P1_COLOR, p1_name),
+            COMP: Player(P2_COLOR, p2_name)
         }
         self.moves = {
             HUMAN: [],
